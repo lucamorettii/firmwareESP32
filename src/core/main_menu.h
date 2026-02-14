@@ -19,9 +19,11 @@
 #include "menu_items/RFMenu.h"
 #include "menu_items/ScriptsMenu.h"
 #include "menu_items/WifiMenu.h"
+#include "menu_items/mikai.h"
 class MainMenu {
 public:
     FileMenu fileMenu;
+    mikai mikai;
     BleMenu bleMenu;
     ClockMenu clockMenu;
     ConnectMenu connectMenu;
