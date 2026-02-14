@@ -13,17 +13,18 @@
 #include "menu_items/GpsMenu.h"
 #include "menu_items/IRMenu.h"
 #include "menu_items/LoRaMenu.h"
+#include "menu_items/Mikai.h"
 #include "menu_items/NRF24.h"
 #include "menu_items/OthersMenu.h"
 #include "menu_items/RFIDMenu.h"
 #include "menu_items/RFMenu.h"
 #include "menu_items/ScriptsMenu.h"
 #include "menu_items/WifiMenu.h"
-#include "menu_items/mikai.h"
+
 class MainMenu {
 public:
     FileMenu fileMenu;
-    mikai mikai;
+    Mikai mikaiMenu;
     BleMenu bleMenu;
     ClockMenu clockMenu;
     ConnectMenu connectMenu;

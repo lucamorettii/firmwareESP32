@@ -1,8 +1,8 @@
-#include "mikai.h"
+#include "Mikai.h"
 #include "core/display.h"
 #include "core/utils.h"
 
-void mikai::optionsMenu() {
+void Mikai::optionsMenu() {
     std::vector<Option> options;
 
     options.push_back(
@@ -72,7 +72,7 @@ void mikai::optionsMenu() {
     loopOptions(options, MENU_TYPE_SUBMENU, "Mikai Menu");
 }
 
-void mikai::drawIcon(float scale) {
+void Mikai::drawIcon(float scale) {
     clearIconArea();
 
     int w = scale * 60; // larghezza banconota
