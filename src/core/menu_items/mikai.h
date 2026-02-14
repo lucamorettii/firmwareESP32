@@ -6,8 +6,8 @@
 
 class mikai : public MenuItemInterface {
 public:
-    mikai() {}
-    String getName() override { return "Mikai"; }
+    mikai() : MenuItemInterface("Mikai") {}
+    void drawIcon(float scale);
     void optionsMenu() override;
 };
 
