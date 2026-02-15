@@ -1,18 +1,11 @@
 #include "Mikai.h"
 #include "core/display.h"
-#include "core/utils.h"
+#include "pn532_srix.h"
 
 void Mikai::optionsMenu() {
     std::vector<Option> options;
 
-    options.push_back(
-        {"Read",
-         []() {
-             Serial.println("Funzione 1 eseguita");
-             // qui il tuo codice reale
-         },
-         false}
-    );
+    options.push_back({"Read", []() { ReadUID(); }, false});
 
     options.push_back(
         {"Info",
@@ -122,4 +115,63 @@ void Mikai::drawIcon(float scale) {
         int y = iconCenterY - int(sin(angle) * euroRadius);
         tft.drawPixel(x, y, bruceConfig.priColor);
     }
+}
+
+void ReadUID() {
+    // Crea istanza del lettore PN532
+#if defined(PN532_IRQ) && defined(PN532_RF_REST)
+    Arduino_PN532_SRIX nfc(PN532_IRQ, PN532_RF_REST);
+#else
+    Arduino_PN532_SRIX nfc;
+#endif
+
+    displayRedStripe("Init PN532...", TFT_WHITE, bruceConfig.bgColor);
+
+    // Inizializza
+    if (!nfc.init()) {
+        displayError("PN532 init failed!");
+        delay(2000);
+        return;
+    }
+
+    displayRedStripe("Place SRIX tag...", TFT_WHITE, bruceConfig.bgColor);
+
+    // Inizializza SRIX
+    if (!nfc.SRIX_init()) {
+        displayError("SRIX init failed");
+        delay(2000);
+        return;
+    }
+
+    // Cerca tag
+    if (!nfc.SRIX_initiate_select()) {
+        displayError("No tag found");
+        delay(2000);
+        return;
+    }
+
+    displaySuccess("Tag found!");
+
+    // Leggi UID
+    uint8_t uid[8];
+    if (!nfc.SRIX_get_uid(uid)) {
+        displayError("UID read failed");
+        delay(2000);
+        return;
+    }
+
+    // Mostra UID
+    String uidStr = "UID: ";
+    for (uint8_t i = 0; i < 8; i++) {
+        if (uid[i] < 0x10) uidStr += "0";
+        uidStr += String(uid[i], HEX);
+        if (i < 7) uidStr += ":";
+    }
+    uidStr.toUpperCase();
+    displayInfo(uidStr.c_str());
+    Serial.println(uidStr);
+    delay(2000);
+
+    displaySuccess("Done!");
+    delay(2000);
 }

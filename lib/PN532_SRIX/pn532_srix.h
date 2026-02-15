@@ -32,11 +32,13 @@
 
 // Helper macro for debug
 #ifdef SRIX_LIB_DEBUG
-    #define SRIX_LIB_LOG(...) Serial.printf(__VA_ARGS__); Serial.println()
-    #define SRIX_LIB_PRINT(...) Serial.print(__VA_ARGS__)
+#define SRIX_LIB_LOG(...)                                                                                    \
+    Serial.printf(__VA_ARGS__);                                                                              \
+    Serial.println()
+#define SRIX_LIB_PRINT(...) Serial.print(__VA_ARGS__)
 #else
-    #define SRIX_LIB_LOG(...) 
-    #define SRIX_LIB_PRINT(...) 
+#define SRIX_LIB_LOG(...)
+#define SRIX_LIB_PRINT(...)
 #endif
 
 // SRIX4K-specific commands
