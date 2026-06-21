@@ -319,44 +319,43 @@ void menuMicroel() {
                  return;
              }
 
-             uint16_t creditoAttuale = leggiCredito(dump_globale);
-             String strAttuale = String(creditoAttuale / 100) + "." + (creditoAttuale % 100 < 10 ? "0" : "") + String(creditoAttuale % 100) + " EUR";
+             struct { const char *label; uint16_t cents; } amounts[] = {
+                 {"0.50 EUR",  50  },
+                 {"1.00 EUR",  100 },
+                 {"2.00 EUR",  200 },
+                 {"5.00 EUR",  500 },
+                 {"10.00 EUR", 1000},
+                 {"15.00 EUR", 1500},
+                 {"20.00 EUR", 2000},
+                 {"50.00 EUR", 5000},
+             };
+             const int N = sizeof(amounts) / sizeof(amounts[0]);
 
-             // Input libero: l'utente digita il credito in euro (es. "15" o "15.50")
-             String input = keyboard("", 6, ("Credito (" + strAttuale + "):").c_str());
-             if (input.isEmpty()) {
-                 mostraMessaggio("Microel - Credito", "Annullato.");
-                 return;
+             std::vector<Option> opts;
+             for (int i = 0; i < N; i++) {
+                 uint16_t c = amounts[i].cents;
+                 opts.push_back(
+                     {amounts[i].label,
+                      [c]() {
+                          impostaCredito(dump_globale, c);
+
+                          mostraInfo("Microel - Credito", "Scrittura in corso...\nNon rimuovere la tessera!");
+
+                          uint8_t settoriScritti = 0;
+                          bool blocco0Scritto = false;
+                          if (!scriviTesseraMicroel(dump_globale, settoriScritti, blocco0Scritto)) {
+                              mostraMessaggio("Microel - Credito", "Scrittura fallita!\nNessun settore scritto.");
+                              return;
+                          }
+
+                          String nuovoStr =
+                              String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                          mostraMessaggio("Microel - Credito", "Fatto!\nNuovo credito: " + nuovoStr + "\nSettori: " + String(settoriScritti));
+                      },
+                      false}
+                 );
              }
-
-             // Converte in centesimi
-             uint16_t creditoCentesimi = 0;
-             int dot = input.indexOf('.');
-             if (dot < 0) {
-                 creditoCentesimi = input.toInt() * 100;
-             } else {
-                 uint16_t euro = input.substring(0, dot).toInt();
-                 String decPart = input.substring(dot + 1);
-                 if (decPart.length() == 1) decPart += "0";
-                 uint16_t cent = decPart.substring(0, 2).toInt();
-                 creditoCentesimi = euro * 100 + cent;
-             }
-
-             // Applica con la logica completa verificata
-             impostaCredito(dump_globale, creditoCentesimi);
-
-             mostraInfo("Microel - Credito", "Scrittura in corso...\nNon rimuovere la tessera!");
-
-             uint8_t settoriScritti = 0;
-             bool blocco0Scritto = false;
-             if (!scriviTesseraMicroel(dump_globale, settoriScritti, blocco0Scritto)) {
-                 mostraMessaggio("Microel - Credito", "Scrittura fallita!\nNessun settore scritto.");
-                 return;
-             }
-
-             String nuovoStr =
-                 String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
-             mostraMessaggio("Microel - Credito", "Fatto!\nNuovo credito: " + nuovoStr + "\nSettori: " + String(settoriScritti));
+             loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
          },                                                 false},
 
         // Genera Chiavi: calcola Key A e Key B da UID inserito manualmente
@@ -479,30 +478,37 @@ void impostaCreditoStoEBene() {
     }
 
     String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
-    String input = keyboard("", 6, "Nuovo credito (EUR):");
-    if (input.isEmpty()) {
-        mostraMessaggio("Sto&Bene - Credito", "Annullato.");
-        return;
-    }
 
-    uint16_t creditoCentesimi = 0;
-    int dot = input.indexOf('.');
-    if (dot < 0) {
-        creditoCentesimi = input.toInt() * 100;
-    } else {
-        uint16_t euro = input.substring(0, dot).toInt();
-        String decPart = input.substring(dot + 1);
-        if (decPart.length() == 1) decPart += "0";
-        creditoCentesimi = euro * 100 + decPart.substring(0, 2).toInt();
-    }
+    struct { const char *label; uint16_t cents; } amounts[] = {
+        {"0.50 EUR",  50  },
+        {"1.00 EUR",  100 },
+        {"2.00 EUR",  200 },
+        {"5.00 EUR",  500 },
+        {"10.00 EUR", 1000},
+        {"15.00 EUR", 1500},
+        {"20.00 EUR", 2000},
+        {"50.00 EUR", 5000},
+    };
+    const int N = sizeof(amounts) / sizeof(amounts[0]);
 
-    String strNuovo = String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
-    mostraMessaggio(
-        "Sto&Bene - Credito",
-        "UID: " + uid + "\n"
-        "Nuovo credito: " + strNuovo + "\n"
-        "Logica specifica\nin fase di sviluppo."
-    );
+    std::vector<Option> opts;
+    for (int i = 0; i < N; i++) {
+        uint16_t c = amounts[i].cents;
+        opts.push_back(
+            {amounts[i].label,
+             [uid, c]() {
+                 String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                 mostraMessaggio(
+                     "Sto&Bene - Credito",
+                     "UID: " + uid + "\n"
+                     "Nuovo credito: " + strNuovo + "\n"
+                     "Logica specifica\nin fase di sviluppo."
+                 );
+             },
+             false}
+        );
+    }
+    loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
 }
 
 // ─── Sottomenu aquaGold ───────────────────────────────────────────────────────
@@ -551,30 +557,37 @@ void impostaCreditoAquaGold() {
     }
 
     String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
-    String input = keyboard("", 6, "Nuovo credito (EUR):");
-    if (input.isEmpty()) {
-        mostraMessaggio("aquaGold - Credito", "Annullato.");
-        return;
-    }
 
-    uint16_t creditoCentesimi = 0;
-    int dot = input.indexOf('.');
-    if (dot < 0) {
-        creditoCentesimi = input.toInt() * 100;
-    } else {
-        uint16_t euro = input.substring(0, dot).toInt();
-        String decPart = input.substring(dot + 1);
-        if (decPart.length() == 1) decPart += "0";
-        creditoCentesimi = euro * 100 + decPart.substring(0, 2).toInt();
-    }
+    struct { const char *label; uint16_t cents; } amounts[] = {
+        {"0.50 EUR",  50  },
+        {"1.00 EUR",  100 },
+        {"2.00 EUR",  200 },
+        {"5.00 EUR",  500 },
+        {"10.00 EUR", 1000},
+        {"15.00 EUR", 1500},
+        {"20.00 EUR", 2000},
+        {"50.00 EUR", 5000},
+    };
+    const int N = sizeof(amounts) / sizeof(amounts[0]);
 
-    String strNuovo = String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
-    mostraMessaggio(
-        "aquaGold - Credito",
-        "UID: " + uid + "\n"
-        "Nuovo credito: " + strNuovo + "\n"
-        "Logica specifica\nin fase di sviluppo."
-    );
+    std::vector<Option> opts;
+    for (int i = 0; i < N; i++) {
+        uint16_t c = amounts[i].cents;
+        opts.push_back(
+            {amounts[i].label,
+             [uid, c]() {
+                 String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                 mostraMessaggio(
+                     "aquaGold - Credito",
+                     "UID: " + uid + "\n"
+                     "Nuovo credito: " + strNuovo + "\n"
+                     "Logica specifica\nin fase di sviluppo."
+                 );
+             },
+             false}
+        );
+    }
+    loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
 }
 
 // ─── Sottomenu TiWash ─────────────────────────────────────────────────────────
@@ -623,30 +636,37 @@ void impostaCreditoTiWash() {
     }
 
     String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
-    String input = keyboard("", 6, "Nuovo credito (EUR):");
-    if (input.isEmpty()) {
-        mostraMessaggio("TiWash - Credito", "Annullato.");
-        return;
-    }
 
-    uint16_t creditoCentesimi = 0;
-    int dot = input.indexOf('.');
-    if (dot < 0) {
-        creditoCentesimi = input.toInt() * 100;
-    } else {
-        uint16_t euro = input.substring(0, dot).toInt();
-        String decPart = input.substring(dot + 1);
-        if (decPart.length() == 1) decPart += "0";
-        creditoCentesimi = euro * 100 + decPart.substring(0, 2).toInt();
-    }
+    struct { const char *label; uint16_t cents; } amounts[] = {
+        {"0.50 EUR",  50  },
+        {"1.00 EUR",  100 },
+        {"2.00 EUR",  200 },
+        {"5.00 EUR",  500 },
+        {"10.00 EUR", 1000},
+        {"15.00 EUR", 1500},
+        {"20.00 EUR", 2000},
+        {"50.00 EUR", 5000},
+    };
+    const int N = sizeof(amounts) / sizeof(amounts[0]);
 
-    String strNuovo = String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
-    mostraMessaggio(
-        "TiWash - Credito",
-        "UID: " + uid + "\n"
-        "Nuovo credito: " + strNuovo + "\n"
-        "Logica specifica\nin fase di sviluppo."
-    );
+    std::vector<Option> opts;
+    for (int i = 0; i < N; i++) {
+        uint16_t c = amounts[i].cents;
+        opts.push_back(
+            {amounts[i].label,
+             [uid, c]() {
+                 String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                 mostraMessaggio(
+                     "TiWash - Credito",
+                     "UID: " + uid + "\n"
+                     "Nuovo credito: " + strNuovo + "\n"
+                     "Logica specifica\nin fase di sviluppo."
+                 );
+             },
+             false}
+        );
+    }
+    loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
 }
 
 // ─── Genera Chiavi (estratta da menuMicroel) ─────────────────────────────────
