@@ -7,6 +7,8 @@
 #include "core/display.h"
 #include "core/mykeyboard.h"
 #include "microel/TessereMicroel.h"
+#include "gestori/StoEBeneLogica.h"
+#include "gestori/AquaGoldLogica.h"
 #include <SD.h>
 
 // ─── Helper UI ────────────────────────────────────────────────────────────────
@@ -450,6 +452,13 @@ void mostraInfoStoEBene() {
     snprintf(strSak, sizeof(strSak), "%02X", dump_globale.sak);
     snprintf(strAtqa, sizeof(strAtqa), "%04X", dump_globale.atqa);
 
+    iniettaChiaviStoEBene(dump_globale);
+    uint8_t settoriLetti = 0;
+    leggiDumpConChiavi(settoriLetti);
+
+    uint16_t credito = leggiCreditoStoEBene(dump_globale);
+    String strCredito = credito > 0 ? String(credito / 100) + "." + (credito % 100 < 10 ? "0" : "") + String(credito % 100) + " EUR" : "N/D";
+
     String gestore = cercaGestore(uid);
     String strGestore = gestore.isEmpty() ? "N/A" : gestore;
 
@@ -462,6 +471,7 @@ void mostraInfoStoEBene() {
         "SAK:     0x" + String(strSak) + "\n"
         "ATQA:    0x" + String(strAtqa) + "\n"
         "Tipo:    " + dump_globale.tipoTag + "\n"
+        "Credito: " + strCredito + "\n"
         "Gestore: " + strGestore + "\n"
         "Dump SD: " + statoSD
     );
@@ -471,13 +481,15 @@ void impostaCreditoStoEBene() {
     mostraInfo("Sto&Bene - Credito", "Avvicina la tessera\nSto&Bene al lettore...");
     if (!attesaTag()) return;
 
+    iniettaChiaviStoEBene(dump_globale);
     uint8_t settoriLetti = 0;
-    if (!leggiDump(settoriLetti)) {
+    if (!leggiDumpConChiavi(settoriLetti)) {
         mostraMessaggio("Sto&Bene - Credito", "Lettura fallita.\nNessun settore leggibile.");
         return;
     }
 
-    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    uint16_t creditoAttuale = leggiCreditoStoEBene(dump_globale);
+    String strAttuale = String(creditoAttuale / 100) + "." + (creditoAttuale % 100 < 10 ? "0" : "") + String(creditoAttuale % 100) + " EUR";
 
     struct { const char *label; uint16_t cents; } amounts[] = {
         {"0.50 EUR",  50  },
@@ -491,24 +503,30 @@ void impostaCreditoStoEBene() {
     };
     const int N = sizeof(amounts) / sizeof(amounts[0]);
 
+    String current = "Attuale: " + strAttuale;
     std::vector<Option> opts;
     for (int i = 0; i < N; i++) {
         uint16_t c = amounts[i].cents;
         opts.push_back(
             {amounts[i].label,
-             [uid, c]() {
-                 String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
-                 mostraMessaggio(
-                     "Sto&Bene - Credito",
-                     "UID: " + uid + "\n"
-                     "Nuovo credito: " + strNuovo + "\n"
-                     "Logica specifica\nin fase di sviluppo."
-                 );
+             [c]() {
+                 impostaCreditoStoEBene(dump_globale, c);
+
+                 mostraInfo("Sto&Bene - Credito", "Scrittura in corso...\nNon rimuovere la tessera!");
+
+                 uint8_t settoriScritti = 0;
+                 if (!scriviDump(dump_globale, settoriScritti)) {
+                     mostraMessaggio("Sto&Bene - Credito", "Scrittura fallita!\nNessun settore scritto.");
+                     return;
+                 }
+
+                 String nuovoStr = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                 mostraMessaggio("Sto&Bene - Credito", "Fatto!\nNuovo credito: " + nuovoStr + "\nSettori: " + String(settoriScritti));
              },
              false}
         );
     }
-    loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
+    loopOptions(opts, MENU_TYPE_SUBMENU, current.c_str());
 }
 
 // ─── Sottomenu aquaGold ───────────────────────────────────────────────────────
@@ -529,6 +547,14 @@ void mostraInfoAquaGold() {
     snprintf(strSak, sizeof(strSak), "%02X", dump_globale.sak);
     snprintf(strAtqa, sizeof(strAtqa), "%04X", dump_globale.atqa);
 
+    iniettaChiaviAquaGold(dump_globale);
+    uint8_t settoriLetti = 0;
+    leggiDumpConChiavi(settoriLetti);
+
+    uint32_t valore = leggiValoreAquaGold(dump_globale);
+    uint16_t credito = valore / 10;
+    String strCredito = credito > 0 ? String(credito / 100) + "." + (credito % 100 < 10 ? "0" : "") + String(credito % 100) + " EUR" : "N/D";
+
     String gestore = cercaGestore(uid);
     String strGestore = gestore.isEmpty() ? "N/A" : gestore;
 
@@ -541,6 +567,7 @@ void mostraInfoAquaGold() {
         "SAK:     0x" + String(strSak) + "\n"
         "ATQA:    0x" + String(strAtqa) + "\n"
         "Tipo:    " + dump_globale.tipoTag + "\n"
+        "Credito: " + strCredito + "\n"
         "Gestore: " + strGestore + "\n"
         "Dump SD: " + statoSD
     );
@@ -550,13 +577,16 @@ void impostaCreditoAquaGold() {
     mostraInfo("aquaGold - Credito", "Avvicina la tessera\naquaGold al lettore...");
     if (!attesaTag()) return;
 
+    iniettaChiaviAquaGold(dump_globale);
     uint8_t settoriLetti = 0;
-    if (!leggiDump(settoriLetti)) {
+    if (!leggiDumpConChiavi(settoriLetti)) {
         mostraMessaggio("aquaGold - Credito", "Lettura fallita.\nNessun settore leggibile.");
         return;
     }
 
-    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    uint32_t valore = leggiValoreAquaGold(dump_globale);
+    uint16_t creditoAttuale = valore / 10;
+    String strAttuale = String(creditoAttuale / 100) + "." + (creditoAttuale % 100 < 10 ? "0" : "") + String(creditoAttuale % 100) + " EUR";
 
     struct { const char *label; uint16_t cents; } amounts[] = {
         {"0.50 EUR",  50  },
@@ -570,24 +600,30 @@ void impostaCreditoAquaGold() {
     };
     const int N = sizeof(amounts) / sizeof(amounts[0]);
 
+    String current = "Attuale: " + strAttuale;
     std::vector<Option> opts;
     for (int i = 0; i < N; i++) {
         uint16_t c = amounts[i].cents;
         opts.push_back(
             {amounts[i].label,
-             [uid, c]() {
-                 String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
-                 mostraMessaggio(
-                     "aquaGold - Credito",
-                     "UID: " + uid + "\n"
-                     "Nuovo credito: " + strNuovo + "\n"
-                     "Logica specifica\nin fase di sviluppo."
-                 );
+             [c]() {
+                 impostaCreditoAquaGold(dump_globale, c);
+
+                 mostraInfo("aquaGold - Credito", "Scrittura in corso...\nNon rimuovere la tessera!");
+
+                 uint8_t settoriScritti = 0;
+                 if (!scriviDump(dump_globale, settoriScritti)) {
+                     mostraMessaggio("aquaGold - Credito", "Scrittura fallita!\nNessun settore scritto.");
+                     return;
+                 }
+
+                 String nuovoStr = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                 mostraMessaggio("aquaGold - Credito", "Fatto!\nNuovo credito: " + nuovoStr + "\nSettori: " + String(settoriScritti));
              },
              false}
         );
     }
-    loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
+    loopOptions(opts, MENU_TYPE_SUBMENU, current.c_str());
 }
 
 // ─── Sottomenu TiWash ─────────────────────────────────────────────────────────
@@ -635,8 +671,6 @@ void impostaCreditoTiWash() {
         return;
     }
 
-    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
-
     struct { const char *label; uint16_t cents; } amounts[] = {
         {"0.50 EUR",  50  },
         {"1.00 EUR",  100 },
@@ -654,11 +688,10 @@ void impostaCreditoTiWash() {
         uint16_t c = amounts[i].cents;
         opts.push_back(
             {amounts[i].label,
-             [uid, c]() {
+             [c]() {
                  String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
                  mostraMessaggio(
                      "TiWash - Credito",
-                     "UID: " + uid + "\n"
                      "Nuovo credito: " + strNuovo + "\n"
                      "Logica specifica\nin fase di sviluppo."
                  );
