@@ -12,34 +12,8 @@ void Tessere::optionsMenu() {
     if (!inizializzaNfc()) return;
 
     std::vector<Option> opzioni = {
-
-        // Info: mostra UID, SAK, ATQA, tipo, gestore e presenza dump SD
-        {"Info",  []() { mostraInfoTag(); }, false                    },
-
-        // Read: legge dump completo e lo salva su SD
-        {"Read",  []() { leggiTessera(); },  false                    },
-
-        // Write: sottomenu con scelta tra scrittura manuale e automatica
-        {"Write",
-         []() {
-             std::vector<Option> subScrivi = {
-                 {        "Scrivi",  []() { scriviTessera(); }, false},
-                 {"Scrivi Auto", []() { scriviAutoTessera(); }, false},
-             };
-             loopOptions(subScrivi, MENU_TYPE_SUBMENU, "Write");
-         },                                            false                                                                     },
-
-        // Microel: sottomenu dedicato alle tessere Microel
-        {"Microel", []() { menuMicroel(); },                                  false                                                           },
-
-        // Config: impostazioni e gestione dati (gestori)
-        {"Config",
-         []() {
-             std::vector<Option> subConfig = {
-                 {"Gestori", []() { menuGestori(); }, false},
-             };
-             loopOptions(subConfig, MENU_TYPE_SUBMENU, "Config");
-         },false},
+        {"Gestori",      []() { menuPrincipaleGestori(); }, false},
+        {"Genera Chiavi", []() { generaChiavi(); },        false},
     };
 
     loopOptions(opzioni, MENU_TYPE_SUBMENU, "Tessere");

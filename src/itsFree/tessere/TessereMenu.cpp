@@ -422,6 +422,289 @@ void menuMicroel() {
     loopOptions(opzioni, MENU_TYPE_SUBMENU, "Microel");
 }
 
+// ─── Menu Principale Gestori ───────────────────────────────────────────────────
+
+void menuPrincipaleGestori() {
+    std::vector<Option> opzioni = {
+        {"Sto&Bene", []() { menuStoEBene(); }, false},
+        {"aquaGold", []() { menuAquaGold(); }, false},
+        {"TiWash",   []() { menuTiWash(); },   false},
+    };
+    loopOptions(opzioni, MENU_TYPE_SUBMENU, "Gestori");
+}
+
+// ─── Sottomenu Sto&Bene ──────────────────────────────────────────────────────
+
+void menuStoEBene() {
+    std::vector<Option> opzioni = {
+        {"Info",           []() { mostraInfoStoEBene(); },      false},
+        {"Imposta Credito", []() { impostaCreditoStoEBene(); }, false},
+    };
+    loopOptions(opzioni, MENU_TYPE_SUBMENU, "Sto&Bene");
+}
+
+void mostraInfoStoEBene() {
+    if (!attesaTag()) return;
+
+    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    char strSak[5], strAtqa[5];
+    snprintf(strSak, sizeof(strSak), "%02X", dump_globale.sak);
+    snprintf(strAtqa, sizeof(strAtqa), "%04X", dump_globale.atqa);
+
+    String gestore = cercaGestore(uid);
+    String strGestore = gestore.isEmpty() ? "N/A" : gestore;
+
+    String percorsoDump = String(PERCORSO_DUMP_DIR) + "/" + uid + ".bin";
+    String statoSD = SD.exists(percorsoDump) ? "Si" : "No";
+
+    mostraMessaggio(
+        "Sto&Bene - Info",
+        "UID:     " + uid + "\n"
+        "SAK:     0x" + String(strSak) + "\n"
+        "ATQA:    0x" + String(strAtqa) + "\n"
+        "Tipo:    " + dump_globale.tipoTag + "\n"
+        "Gestore: " + strGestore + "\n"
+        "Dump SD: " + statoSD
+    );
+}
+
+void impostaCreditoStoEBene() {
+    mostraInfo("Sto&Bene - Credito", "Avvicina la tessera\nSto&Bene al lettore...");
+    if (!attesaTag()) return;
+
+    uint8_t settoriLetti = 0;
+    if (!leggiDump(settoriLetti)) {
+        mostraMessaggio("Sto&Bene - Credito", "Lettura fallita.\nNessun settore leggibile.");
+        return;
+    }
+
+    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    String input = keyboard("", 6, "Nuovo credito (EUR):");
+    if (input.isEmpty()) {
+        mostraMessaggio("Sto&Bene - Credito", "Annullato.");
+        return;
+    }
+
+    uint16_t creditoCentesimi = 0;
+    int dot = input.indexOf('.');
+    if (dot < 0) {
+        creditoCentesimi = input.toInt() * 100;
+    } else {
+        uint16_t euro = input.substring(0, dot).toInt();
+        String decPart = input.substring(dot + 1);
+        if (decPart.length() == 1) decPart += "0";
+        creditoCentesimi = euro * 100 + decPart.substring(0, 2).toInt();
+    }
+
+    String strNuovo = String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
+    mostraMessaggio(
+        "Sto&Bene - Credito",
+        "UID: " + uid + "\n"
+        "Nuovo credito: " + strNuovo + "\n"
+        "Logica specifica\nin fase di sviluppo."
+    );
+}
+
+// ─── Sottomenu aquaGold ───────────────────────────────────────────────────────
+
+void menuAquaGold() {
+    std::vector<Option> opzioni = {
+        {"Info",           []() { mostraInfoAquaGold(); },      false},
+        {"Imposta Credito", []() { impostaCreditoAquaGold(); }, false},
+    };
+    loopOptions(opzioni, MENU_TYPE_SUBMENU, "aquaGold");
+}
+
+void mostraInfoAquaGold() {
+    if (!attesaTag()) return;
+
+    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    char strSak[5], strAtqa[5];
+    snprintf(strSak, sizeof(strSak), "%02X", dump_globale.sak);
+    snprintf(strAtqa, sizeof(strAtqa), "%04X", dump_globale.atqa);
+
+    String gestore = cercaGestore(uid);
+    String strGestore = gestore.isEmpty() ? "N/A" : gestore;
+
+    String percorsoDump = String(PERCORSO_DUMP_DIR) + "/" + uid + ".bin";
+    String statoSD = SD.exists(percorsoDump) ? "Si" : "No";
+
+    mostraMessaggio(
+        "aquaGold - Info",
+        "UID:     " + uid + "\n"
+        "SAK:     0x" + String(strSak) + "\n"
+        "ATQA:    0x" + String(strAtqa) + "\n"
+        "Tipo:    " + dump_globale.tipoTag + "\n"
+        "Gestore: " + strGestore + "\n"
+        "Dump SD: " + statoSD
+    );
+}
+
+void impostaCreditoAquaGold() {
+    mostraInfo("aquaGold - Credito", "Avvicina la tessera\naquaGold al lettore...");
+    if (!attesaTag()) return;
+
+    uint8_t settoriLetti = 0;
+    if (!leggiDump(settoriLetti)) {
+        mostraMessaggio("aquaGold - Credito", "Lettura fallita.\nNessun settore leggibile.");
+        return;
+    }
+
+    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    String input = keyboard("", 6, "Nuovo credito (EUR):");
+    if (input.isEmpty()) {
+        mostraMessaggio("aquaGold - Credito", "Annullato.");
+        return;
+    }
+
+    uint16_t creditoCentesimi = 0;
+    int dot = input.indexOf('.');
+    if (dot < 0) {
+        creditoCentesimi = input.toInt() * 100;
+    } else {
+        uint16_t euro = input.substring(0, dot).toInt();
+        String decPart = input.substring(dot + 1);
+        if (decPart.length() == 1) decPart += "0";
+        creditoCentesimi = euro * 100 + decPart.substring(0, 2).toInt();
+    }
+
+    String strNuovo = String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
+    mostraMessaggio(
+        "aquaGold - Credito",
+        "UID: " + uid + "\n"
+        "Nuovo credito: " + strNuovo + "\n"
+        "Logica specifica\nin fase di sviluppo."
+    );
+}
+
+// ─── Sottomenu TiWash ─────────────────────────────────────────────────────────
+
+void menuTiWash() {
+    std::vector<Option> opzioni = {
+        {"Info",           []() { mostraInfoTiWash(); },      false},
+        {"Imposta Credito", []() { impostaCreditoTiWash(); }, false},
+    };
+    loopOptions(opzioni, MENU_TYPE_SUBMENU, "TiWash");
+}
+
+void mostraInfoTiWash() {
+    if (!attesaTag()) return;
+
+    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    char strSak[5], strAtqa[5];
+    snprintf(strSak, sizeof(strSak), "%02X", dump_globale.sak);
+    snprintf(strAtqa, sizeof(strAtqa), "%04X", dump_globale.atqa);
+
+    String gestore = cercaGestore(uid);
+    String strGestore = gestore.isEmpty() ? "N/A" : gestore;
+
+    String percorsoDump = String(PERCORSO_DUMP_DIR) + "/" + uid + ".bin";
+    String statoSD = SD.exists(percorsoDump) ? "Si" : "No";
+
+    mostraMessaggio(
+        "TiWash - Info",
+        "UID:     " + uid + "\n"
+        "SAK:     0x" + String(strSak) + "\n"
+        "ATQA:    0x" + String(strAtqa) + "\n"
+        "Tipo:    " + dump_globale.tipoTag + "\n"
+        "Gestore: " + strGestore + "\n"
+        "Dump SD: " + statoSD
+    );
+}
+
+void impostaCreditoTiWash() {
+    mostraInfo("TiWash - Credito", "Avvicina la tessera\nTiWash al lettore...");
+    if (!attesaTag()) return;
+
+    uint8_t settoriLetti = 0;
+    if (!leggiDump(settoriLetti)) {
+        mostraMessaggio("TiWash - Credito", "Lettura fallita.\nNessun settore leggibile.");
+        return;
+    }
+
+    String uid = uidInHex(dump_globale.uid, dump_globale.lunghezzaUid);
+    String input = keyboard("", 6, "Nuovo credito (EUR):");
+    if (input.isEmpty()) {
+        mostraMessaggio("TiWash - Credito", "Annullato.");
+        return;
+    }
+
+    uint16_t creditoCentesimi = 0;
+    int dot = input.indexOf('.');
+    if (dot < 0) {
+        creditoCentesimi = input.toInt() * 100;
+    } else {
+        uint16_t euro = input.substring(0, dot).toInt();
+        String decPart = input.substring(dot + 1);
+        if (decPart.length() == 1) decPart += "0";
+        creditoCentesimi = euro * 100 + decPart.substring(0, 2).toInt();
+    }
+
+    String strNuovo = String(creditoCentesimi / 100) + "." + (creditoCentesimi % 100 < 10 ? "0" : "") + String(creditoCentesimi % 100) + " EUR";
+    mostraMessaggio(
+        "TiWash - Credito",
+        "UID: " + uid + "\n"
+        "Nuovo credito: " + strNuovo + "\n"
+        "Logica specifica\nin fase di sviluppo."
+    );
+}
+
+// ─── Genera Chiavi (estratta da menuMicroel) ─────────────────────────────────
+
+void generaChiavi() {
+    String uidInput = keyboard("", 8, "UID (8 caratteri hex):");
+    if (uidInput.isEmpty()) {
+        mostraMessaggio("Genera Chiavi", "Operazione annullata.");
+        return;
+    }
+    uidInput.toUpperCase();
+
+    uint8_t kA[LUNGHEZZA_CHIAVE], kB[LUNGHEZZA_CHIAVE];
+    if (!generaChiaviDaStringa(uidInput, kA, kB)) {
+        mostraMessaggio(
+            "Genera Chiavi",
+            "UID non valido.\n"
+            "Inserisci 8 caratteri\n"
+            "esadecimali.\n"
+            "Es: 1E733840"
+        );
+        return;
+    }
+
+    String strA, strB;
+    for (int i = 0; i < LUNGHEZZA_CHIAVE; i++) {
+        if (kA[i] < 0x10) strA += '0';
+        strA += String(kA[i], HEX);
+        if (kB[i] < 0x10) strB += '0';
+        strB += String(kB[i], HEX);
+    }
+    strA.toUpperCase();
+    strB.toUpperCase();
+
+    std::vector<Option> salvata = {
+        {"Salva su SD",
+         [uidInput, kA, kB]() {
+             bool ok = salvaChiaviSD(uidInput, kA, kB);
+             String strA2, strB2;
+             for (int i = 0; i < LUNGHEZZA_CHIAVE; i++) {
+                 if (kA[i] < 0x10) strA2 += '0';
+                 strA2 += String(kA[i], HEX);
+                 if (kB[i] < 0x10) strB2 += '0';
+                 strB2 += String(kB[i], HEX);
+             }
+             strA2.toUpperCase();
+             strB2.toUpperCase();
+             String stato = ok ? "Salvate in\n" PERCORSO_CHIAVI : "Errore salvataggio SD";
+             mostraMessaggio("Genera Chiavi", "UID:  " + uidInput + "\n" + "KeyA: " + strA2 + "\n" + "KeyB: " + strB2 + "\n" + stato);
+         },                     false},
+        {"Solo mostra",
+         [uidInput, strA, strB]() {
+             mostraMessaggio("Genera Chiavi", "UID:  " + uidInput + "\n" + "KeyA: " + strA + "\n" + "KeyB: " + strB);
+         },                     false},
+    };
+    loopOptions(salvata, MENU_TYPE_SUBMENU, ("UID: " + uidInput).c_str());
+}
+
 // ─── Menu Gestori ─────────────────────────────────────────────────────────────
 
 void menuGestori() {

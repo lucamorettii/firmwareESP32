@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "embedded-systems": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/embedded-systems/SKILL.md",
+      "computedHash": "046558a8e6cd2c7e3e1da41360d64687fc72514329e04aad15e5bb7c4d19681b"
+    },
+    "esp32": {
+      "source": "ezrover/ESP32-AI-Agent-Skill",
+      "sourceType": "github",
+      "skillPath": "skills/esp32/SKILL.md",
+      "computedHash": "0cbb122808b5caf07bc543fec15863015dde86abf8db3cafa4d335832531f0a4"
+    },
+    "platformio": {
+      "source": "o2scale/electronics-agent-kit",
+      "sourceType": "github",
+      "skillPath": ".agent/skills/platformio/SKILL.md",
+      "computedHash": "50260816e43106d08ae8ccdcda7eaf685e55c040203a9bd3413d54287a399809"
+    },
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "computedHash": "7e3c9cd74e9e2b4828527a857170e86310f2dab5ea8030a9043df2c7e6c88857"
+    }
+  }
+}

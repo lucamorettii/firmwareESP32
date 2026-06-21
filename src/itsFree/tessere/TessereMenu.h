@@ -58,6 +58,72 @@ void scriviAutoTessera();
  */
 void menuMicroel();
 
+// ─── Nuovo menu Gestori ───────────────────────────────────────────────────────
+
+/**
+ * @brief Menu principale gestori: Sto&Bene, aquaGold, TiWash.
+ *
+ * Mostra i tre gestori disponibili e demanda ai rispettivi sottomenu.
+ */
+void menuPrincipaleGestori();
+
+/**
+ * @brief Sottomenu Sto&Bene: Info, Imposta Credito.
+ */
+void menuStoEBene();
+
+/**
+ * @brief Sottomenu aquaGold: Info, Imposta Credito.
+ */
+void menuAquaGold();
+
+/**
+ * @brief Sottomenu TiWash: Info, Imposta Credito.
+ */
+void menuTiWash();
+
+// ─── Placeholder logica gestori ──────────────────────────────────────────────
+
+/**
+ * @brief Mostra info tag con contesto Sto&Bene.
+ */
+void mostraInfoStoEBene();
+
+/**
+ * @brief Imposta credito su tessera Sto&Bene (placeholder).
+ */
+void impostaCreditoStoEBene();
+
+/**
+ * @brief Mostra info tag con contesto aquaGold.
+ */
+void mostraInfoAquaGold();
+
+/**
+ * @brief Imposta credito su tessera aquaGold (placeholder).
+ */
+void impostaCreditoAquaGold();
+
+/**
+ * @brief Mostra info tag con contesto TiWash.
+ */
+void mostraInfoTiWash();
+
+/**
+ * @brief Imposta credito su tessera TiWash (placeholder).
+ */
+void impostaCreditoTiWash();
+
+// ─── Generazione chiavi (da menuMicroel) ─────────────────────────────────────
+
+/**
+ * @brief Genera Key A e Key B da UID inserito manualmente.
+ *
+ * Estratta dal vecchio menuMicroel() per essere accessibile
+ * direttamente dal menu Tessere principale.
+ */
+void generaChiavi();
+
 // ─── Azioni menu Config ───────────────────────────────────────────────────────
 
 /**
