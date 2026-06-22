@@ -104,7 +104,7 @@ scriviDump(dump_globale, settoriScritti) → scrive solo blocchi con bloccLetto=
 
 ## Cose Ancora da Fare
 
-- [ ] **TiWash**: implementare logica specifica (settore/blocchi/formato credito)
+- [x] **TiWash**: logica Microel riutilizzata (stesso formato credito)
 - [ ] **AquaGold Info**: testare lettura credito (valore/10 per centesimi)
 - [ ] **Sto&Bene Info test**: testare su tag reale
 - [ ] Salvare dump dopo imposta credito? (opzionale, per backup)

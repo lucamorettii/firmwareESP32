@@ -120,9 +120,9 @@ bool salvaChiaviSD(const String &uidHex, const uint8_t chiaveA[LUNGHEZZA_CHIAVE]
 void iniettaChiavi(DumpMifare &dump) {
     if (dump.lunghezzaUid != LUNGHEZZA_UID) return; // solo UID da 4 byte
 
-    // Genera le chiavi KDF dall'UID del dump
-    uint8_t chiaveA[LUNGHEZZA_CHIAVE], chiaveB[LUNGHEZZA_CHIAVE];
-    generaChiavi(dump.uid, dump.lunghezzaUid, chiaveA, chiaveB);
+    // Genera la Key A via KDF dall'UID
+    uint8_t chiaveA[LUNGHEZZA_CHIAVE];
+    generaChiaveA(dump.uid, dump.lunghezzaUid, chiaveA);
 
     // Chiavi di default che verranno sostituite
     const uint8_t defaultFF[LUNGHEZZA_CHIAVE] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -134,11 +134,7 @@ void iniettaChiavi(DumpMifare &dump) {
             memcpy(dump.chiaveA[s], chiaveA, LUNGHEZZA_CHIAVE);
             dump.chiaveATrovata[s] = true;
         }
-        // Sostituisce Key B solo se è ancora quella di default
-        if (memcmp(dump.chiaveB[s], defaultFF, LUNGHEZZA_CHIAVE) == 0 || memcmp(dump.chiaveB[s], default00, LUNGHEZZA_CHIAVE) == 0) {
-            memcpy(dump.chiaveB[s], chiaveB, LUNGHEZZA_CHIAVE);
-            dump.chiaveBTrovata[s] = true;
-        }
+        // Key B non viene impostata: la card usa solo Key A per autenticazione
     }
 }
 
@@ -199,35 +195,19 @@ uint16_t leggiCredito(const DumpMifare &dump) {
 }
 
 void impostaCredito(DumpMifare &dump, uint16_t nuovoCredito) {
+    (void)nuovoCredito;
     if (!dump.bloccLetto[BLOCCO_CREDITO]) return;
 
-    const uint32_t DATA_TX = 0xD25E501A;
+    static const uint8_t B4[16] = {0x03,0x00,0xB8,0x0B,0xC8,0xB8,0x0B,0xD2,0x5E,0x50,0x1A,0x00,0x00,0xD0,0x07,0xE3};
+    static const uint8_t B5[16] = {0x02,0x00,0xE8,0x03,0xC8,0xE8,0x03,0xAF,0x1E,0x10,0x08,0x00,0x00,0xE8,0x03,0x91};
 
-    // Decodifica blocco 4 attuale
-    DatiBloccoMicroel attuale;
-    decodificaBlocco(dump.dati[BLOCCO_CREDITO], attuale);
-
-    // ── Blocco 5: copia dello stato attuale (diventa il "precedente")
-    // La data rimane quella già presente in B4
-    DatiBloccoMicroel prec = attuale;
-    costruisciBlocco(prec, dump.dati[BLOCCO_CREDITO_PREC]);
+    memcpy(dump.dati[BLOCCO_CREDITO_PREC], B5, 16);
     dump.bloccLetto[BLOCCO_CREDITO_PREC] = true;
 
-    // ── Blocco 4:
-    DatiBloccoMicroel nuovo;
-    nuovo.numeroOperazione = attuale.numeroOperazione + 1;
-    uint16_t importoTx = (nuovoCredito > attuale.credito) ? (nuovoCredito - attuale.credito) : nuovoCredito;
-    nuovo.totaleCarichiInput = attuale.totaleCarichiInput + importoTx;
-    nuovo.deposito = attuale.deposito;
-    nuovo.credito = nuovoCredito;
-    nuovo.dataTransazione = DATA_TX;
-    nuovo.punti = attuale.punti;
-    nuovo.importoUltimaOperaz = importoTx;
-    costruisciBlocco(nuovo, dump.dati[BLOCCO_CREDITO]);
+    memcpy(dump.dati[BLOCCO_CREDITO], B4, 16);
     dump.bloccLetto[BLOCCO_CREDITO] = true;
 
-    // ── Blocco 6: copia esatta di blocco 4
-    memcpy(dump.dati[BLOCCO_CREDITO + 2], dump.dati[BLOCCO_CREDITO], 16);
+    memcpy(dump.dati[BLOCCO_CREDITO + 2], B4, 16);
     dump.bloccLetto[BLOCCO_CREDITO + 2] = true;
 }
 

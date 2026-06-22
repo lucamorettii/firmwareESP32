@@ -105,12 +105,12 @@ void mostraInfoAquaGold();
 void impostaCreditoAquaGold();
 
 /**
- * @brief Mostra info tag con contesto TiWash.
+ * @brief Mostra info tag con contesto TiWash (logica Microel riutilizzata).
  */
 void mostraInfoTiWash();
 
 /**
- * @brief Imposta credito su tessera TiWash (placeholder).
+ * @brief Imposta credito su tessera TiWash (logica Microel riutilizzata).
  */
 void impostaCreditoTiWash();
 

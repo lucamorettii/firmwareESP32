@@ -644,6 +644,13 @@ void mostraInfoTiWash() {
     snprintf(strSak, sizeof(strSak), "%02X", dump_globale.sak);
     snprintf(strAtqa, sizeof(strAtqa), "%04X", dump_globale.atqa);
 
+    iniettaChiavi(dump_globale);
+    uint8_t settoriLetti = 0;
+    leggiDumpConChiavi(settoriLetti);
+
+    uint16_t credito = leggiCredito(dump_globale);
+    String strCredito = credito > 0 ? String(credito / 100) + "." + (credito % 100 < 10 ? "0" : "") + String(credito % 100) + " EUR" : "N/D";
+
     String gestore = cercaGestore(uid);
     String strGestore = gestore.isEmpty() ? "N/A" : gestore;
 
@@ -656,6 +663,7 @@ void mostraInfoTiWash() {
         "SAK:     0x" + String(strSak) + "\n"
         "ATQA:    0x" + String(strAtqa) + "\n"
         "Tipo:    " + dump_globale.tipoTag + "\n"
+        "Credito: " + strCredito + "\n"
         "Gestore: " + strGestore + "\n"
         "Dump SD: " + statoSD
     );
@@ -665,11 +673,15 @@ void impostaCreditoTiWash() {
     mostraInfo("TiWash - Credito", "Avvicina la tessera\nTiWash al lettore...");
     if (!attesaTag()) return;
 
+    iniettaChiavi(dump_globale);
     uint8_t settoriLetti = 0;
-    if (!leggiDump(settoriLetti)) {
+    if (!leggiDumpConChiavi(settoriLetti)) {
         mostraMessaggio("TiWash - Credito", "Lettura fallita.\nNessun settore leggibile.");
         return;
     }
+
+    uint16_t creditoAttuale = leggiCredito(dump_globale);
+    String strAttuale = String(creditoAttuale / 100) + "." + (creditoAttuale % 100 < 10 ? "0" : "") + String(creditoAttuale % 100) + " EUR";
 
     struct { const char *label; uint16_t cents; } amounts[] = {
         {"0.50 EUR",  50  },
@@ -679,27 +691,35 @@ void impostaCreditoTiWash() {
         {"10.00 EUR", 1000},
         {"15.00 EUR", 1500},
         {"20.00 EUR", 2000},
+        {"30.00 EUR", 3000},
         {"50.00 EUR", 5000},
     };
     const int N = sizeof(amounts) / sizeof(amounts[0]);
 
+    String current = "Attuale: " + strAttuale;
     std::vector<Option> opts;
     for (int i = 0; i < N; i++) {
         uint16_t c = amounts[i].cents;
         opts.push_back(
             {amounts[i].label,
              [c]() {
-                 String strNuovo = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
-                 mostraMessaggio(
-                     "TiWash - Credito",
-                     "Nuovo credito: " + strNuovo + "\n"
-                     "Logica specifica\nin fase di sviluppo."
-                 );
+                 impostaCredito(dump_globale, c);
+
+                 mostraInfo("TiWash - Credito", "Scrittura in corso...\nNon rimuovere la tessera!");
+
+                 uint8_t settoriScritti = 0;
+                 if (!scriviDump(dump_globale, settoriScritti)) {
+                     mostraMessaggio("TiWash - Credito", "Scrittura fallita!\nNessun settore scritto.");
+                     return;
+                 }
+
+                 String nuovoStr = String(c / 100) + "." + (c % 100 < 10 ? "0" : "") + String(c % 100) + " EUR";
+                 mostraMessaggio("TiWash - Credito", "Fatto!\nNuovo credito: " + nuovoStr + "\nSettori: " + String(settoriScritti));
              },
              false}
         );
     }
-    loopOptions(opts, MENU_TYPE_SUBMENU, "Imposta credito");
+    loopOptions(opts, MENU_TYPE_SUBMENU, current.c_str());
 }
 
 // ─── Genera Chiavi (estratta da menuMicroel) ─────────────────────────────────
